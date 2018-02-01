@@ -3,12 +3,28 @@ import scrapy
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import CrawlSpider, Rule
 from Zhiyou.items import ZhiyouItem
+import time
 
+# 1, 导入类
+from scrapy_redis.spiders import RedisCrawlSpider
 
-class ZhiyoujiSpider(CrawlSpider):
+# 2, 修改类继承
+# class ZhiyoujiSpider(CrawlSpider):
+class ZhiyoujiSpider(RedisCrawlSpider):
     name = 'zhiyouji'
-    allowed_domains = ['jobui.com']
-    start_urls = ['http://www.jobui.com/cmp?area=%E5%85%A8%E5%9B%BD&keyword=']
+
+    # 3, 注销允许的域和起始的url
+    # allowed_domains = ['jobui.com']
+    # start_urls = ['http://www.jobui.com/cmp?area=%E5%85%A8%E5%9B%BD&keyword=']
+
+    # 4, redis_key
+    redis_key = 'python4'
+
+    # 5, 编写__init__, 获取允许的域
+    def __init__(self, *args, **kwargs):
+        domain = kwargs.pop('domain','')
+        self.allowed_domains = list(filter(None, domain.split((','))))
+        super(ZhiyoujiSpider, self).__init__(*args, **kwargs)
 
     rules = (
         # 列表页面提取规则
@@ -24,7 +40,7 @@ class ZhiyoujiSpider(CrawlSpider):
 
         # 抽取数据
         item['data_source'] = response.url
-        item['timestamp'] = response.url
+        item['timestamp'] = time.time()
 
         # 从响应中抽取数据
         item['company_name'] = response.xpath('//*[@id="companyH1"]/a/text()').extract_first()
